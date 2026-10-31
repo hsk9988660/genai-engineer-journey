@@ -99,7 +99,6 @@ def test_booking_is_idempotent_and_confirmation_is_stable():
 
 @pytest.mark.parametrize("sql", [
     "WITH t AS (SELECT * FROM customers) SELECT * FROM t",  # private table hidden behind a CTE alias
-    "WITH customers AS (SELECT 1 AS email) SELECT * FROM customers",  # alias shadowing a private table name
     "SELECT * FROM (SELECT email FROM customers)",  # subquery
 ])
 def test_cte_and_subquery_aliases_cannot_be_used_to_reach_private_tables(db, sql):
@@ -110,3 +109,9 @@ def test_cte_and_subquery_aliases_cannot_be_used_to_reach_private_tables(db, sql
 def test_legitimate_cte_and_subquery_aliases_still_work(db):
     assert run_readonly_query(db, "WITH t AS (SELECT region, units FROM sales) SELECT sum(units) FROM t")["rows"] == [[1000]]
     assert run_readonly_query(db, "SELECT max(u) FROM (SELECT units AS u FROM sales)")["rows"] == [[310]]
+
+
+def test_a_cte_that_shadows_a_private_table_name_returns_only_its_own_data(db):
+    """The CTE replaces the table name inside the query, so the real `customers` rows are never read."""
+    out = run_readonly_query(db, "WITH customers AS (SELECT 1 AS email) SELECT * FROM customers")
+    assert out["rows"] == [[1]]

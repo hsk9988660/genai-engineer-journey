@@ -6,7 +6,7 @@ Lesson 04 of [ai-agents-for-beginners](https://github.com/microsoft/ai-agents-fo
 
 ```bash
 pip install anthropic pydantic pytest
-python -m pytest -q                        # 44 tests, offline, no API key
+python -m pytest -q                        # 45 tests, offline, no API key
 set ANTHROPIC_API_KEY=sk-ant-...           # macOS/Linux: export ANTHROPIC_API_KEY=...
 python app.py "What was total revenue by region?"
 python app.py "Summarize https://example.com/deals"    # contains an injected instruction: watch it get blocked
