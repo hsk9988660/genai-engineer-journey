@@ -1,12 +1,12 @@
 # GenAI Engineer Journey
 
-**Ten lessons on building AI agents, each one a small, tested, working codebase on the Claude API, with no agent framework and no cloud account.**
+**Eleven lessons on building AI agents, each one a small, tested, working codebase on the Claude API, with no agent framework and no cloud account.**
 
-This repo follows the first ten lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
+This repo follows the first eleven lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
 
 1. **The concept, argued like a senior engineer would.** Not "what is a planner" but "when does a planner beat a loop, and how does it fail?"
-2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,000 (lesson 10), comments included, using only `anthropic`, `pydantic` and the standard library.
-3. **Tests you can run for free.** 460 offline tests with a scripted fake model. No API key, no network, no cost.
+2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,450 (lesson 11), comments included, using only `anthropic`, `pydantic` and the standard library.
+3. **Tests you can run for free.** 595 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
 
 Every lesson README also has a section called **"What is NOT known"**. That is deliberate. See [Honest status](#honest-status-read-this-before-you-trust-anything).
 
@@ -20,16 +20,17 @@ It is probably not for you if you want a ready-made library to import. These are
 
 ## The big ideas
 
-Eight ideas come up in almost every lesson. If you only read this section, read these.
+Nine ideas come up across the lessons. If you only read this section, read these.
 
 1. **An agent is an LLM in a loop with tools, and the loop is about 25 lines.** Everything else is refinement. (Lesson 01)
 2. **The model proposes, your code disposes.** The model only *requests* tool calls. Your code decides whether they run. (04, 06)
 3. **Put rules in code, not in prompts.** A prompt is a request. Validation, permissions, budgets and approvals must be enforced by code the model cannot talk its way past. (03, 04, 06, 07)
 4. **Never trust the model's claim when you have the ground truth.** Re-check availability, quotes, totals, and dates in code. A schema guarantees the *shape* of an answer, not that it is *true*. (03, 05, 10)
-5. **Assume the model will be fooled, and make that not matter.** Prompt injection will sometimes succeed. Limit what a fooled agent can do. (04, 06, 08)
+5. **Assume the model will be fooled, and make that not matter.** Prompt injection will sometimes succeed. Limit what a fooled agent can do. (04, 06, 08, 11)
 6. **Reflection works when it is grounded in something checkable.** "Review your answer" is weak. "Here is exactly which test failed" is strong. (09)
 7. **Add complexity only when you can measure it paying off.** More agents, planners and reflection loops all cost tokens and add failure modes. Compare against a simpler baseline. (07, 08, 09)
 8. **You cannot improve what you cannot measure, and small samples lie.** Fifty test cases cannot tell 80% from 86%. Use confidence intervals and a release gate. (10)
+9. **A protocol makes a server connectable, never trustworthy.** Tool descriptions are prompt text, tool definitions can change after approval, and results are untrusted. Pin, namespace, and re-verify. (11)
 
 ## Quick start
 
@@ -39,7 +40,7 @@ cd genai-engineer-journey
 python -m venv .venv
 .venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python run_all_tests.py           # all 460 offline tests, one summary table
+python run_all_tests.py           # all 595 offline tests, one summary table
 ```
 
 Run one lesson, or a few:
@@ -69,6 +70,7 @@ Read them in order the first time. Later lessons build on earlier ones.
 | [08](lesson-08-multi-agent-in-claude/) | **Multi-agent** | Orchestrator and workers with isolated contexts, permission separation, an evidence-based checker, hand-off routing | Multiple agents are justified by isolation, permissions, parallelism and independent review, not by "specialization". Whether it beats one agent is untested here. | 54 |
 | [09](lesson-09-metacognition-in-claude/) | **Metacognition** | Grounded reflection loops, recovery in code, stuck detection, calibration metrics, a memory that cannot be poisoned | Ungrounded self-review *can* turn a correct answer wrong. A scripted test shows the harness catches that, and the live rate is unmeasured. It reports fix rate *and* break rate. | 66 |
 | [10](lesson-10-production-in-claude/) | **Production** | Telemetry, sampling, metrics, alerts, a statistical release gate, versioned eval sets, retries, a scope-safe cache | Cost per call is the wrong metric. Cost per successful outcome can reverse the ranking (shown with a hypothetical example, not real prices). | 106 |
+| [11](lesson-11-protocols-in-claude/) | **Agent protocols (MCP, A2A)** | A real MCP server and client written from scratch over stdio, a security gateway (allowlist, pinned tool definitions, namespacing, taint), hostile demo servers, and an A2A-inspired task protocol | The lesson's notebooks contained no actual MCP or A2A. Building it exposed a startup-timeout flaw and a server that destroyed its own rejections. Not tested against any official SDK or host. | 135 |
 
 ## Find it by concept
 
@@ -97,6 +99,11 @@ Jumping in for one idea? Start here.
 | Confidence intervals and a ship/block gate | [10 `stats.py`](lesson-10-production-in-claude/stats.py), [10 `regression.py`](lesson-10-production-in-claude/regression.py) |
 | A cache that cannot leak across users | [10 `reliability.py`](lesson-10-production-in-claude/reliability.py) |
 | Handling money data correctly | [10 `expense.py`](lesson-10-production-in-claude/expense.py) |
+| The MCP wire protocol (JSON-RPC over stdio) | [11 `mcp_server.py`](lesson-11-protocols-in-claude/mcp_server.py), [11 `mcp_client.py`](lesson-11-protocols-in-claude/mcp_client.py) |
+| Defense against tool poisoning and rug pulls | [11 `gateway.py`](lesson-11-protocols-in-claude/gateway.py) |
+| Hostile and broken MCP servers to test against | [11 `demo_servers.py`](lesson-11-protocols-in-claude/demo_servers.py) |
+| An agent whose tools are discovered at runtime | [11 `agent_loop.py`](lesson-11-protocols-in-claude/agent_loop.py) |
+| Agent-to-agent tasks with a lifecycle (A2A-inspired) | [11 `a2a_lite.py`](lesson-11-protocols-in-claude/a2a_lite.py) |
 
 ## How each lesson is organized
 
@@ -141,6 +148,7 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 | 08 | `python research.py "..."`, `python router.py "..."`, `python compare.py` | |
 | 09 | `python reflect.py "..."`, `python harness.py` | |
 | 10 | `python expense.py receipt.jpg "Your Name"` | |
+| 11 | `python agent_loop.py "..."` | `python server_main.py flights` (runs a demo MCP server over stdio) |
 
 - **Live runs cost real money.** The `evals`, `compare` and `harness` commands make many calls. Check your usage before running them.
 - Most lessons read the model name from the `ANTHROPIC_MODEL` environment variable, falling back to `claude-sonnet-5-5`. Set it to the model you want. A few helpers have the default written in directly, so search a lesson for `claude-sonnet-5-5` if you change models.
@@ -149,12 +157,13 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 
 ## Honest status: read this before you trust anything
 
-**Verified:** all 460 tests pass (`python run_all_tests.py`). Lessons 09 and 10 were also *mutation-checked*: key behaviors were deliberately broken in a scratch copy to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
+**Verified:** all 595 tests pass (`python run_all_tests.py`). Lessons 09, 10 and 11 were also *mutation-checked*: key behaviors were deliberately broken in a scratch copy to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
 
 **Not verified, and the lesson READMEs say so:**
 - **Nothing was run against a live model.** Every model response in every test is scripted. The tests prove the *mechanics* (validation, caps, isolation, routing, statistics). They do **not** prove how a real model behaves.
 - **The live evaluations have never been run.** `evals.py live`, `compare.py` and `harness.py` are how you would find out, for example, whether multi-agent beats a single agent, or whether reflection helps or hurts. The repo does not know the answers, and any such claim in a README is labelled a hypothesis.
 - **Numbers in tests are scripted.** Token counts, prices (placeholders for made-up model names), and the "$2 per failure" example are arithmetic, not measurements.
+- **Lesson 11 was never tested against an official MCP or A2A implementation.** Its server and client agree with each other, and were written from my recollection of the specs, which differ between versions. Its A2A code is explicitly *inspired by* A2A and is not wire-compatible.
 - **Several known limits are documented per lesson**, such as: regex PII detection misses names, a verbatim quote check does not prove a quote supports a claim, and a policy engine is only as good as the metadata developers declare.
 
 Treat this as **learning material, not audited production code.** If you use any of it for something that matters, run the live evaluations on your own data first.
@@ -167,9 +176,9 @@ Treat this as **learning material, not audited production code.** If you use any
 
 **Will it work with other models?** The code uses Anthropic's API shapes (tool use blocks, forced `tool_choice`, `input_schema`). I have not tested other providers. The ideas transfer, but the code would need adapting.
 
-**Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 10 is in the guards, checks and measurements, not in the happy path.
+**Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 11 is in the guards, checks and measurements, not in the happy path.
 
-**Where are lessons 11 to 18?** Not built yet. The source course has more lessons (protocols, context engineering, memory, browser use, deployment, local agents, security). This repo covers the first ten.
+**Where are lessons 12 to 18?** Not built yet. The source course has more lessons (context engineering, memory, the Microsoft framework, browser use, deployment, local agents, security). This repo covers the first eleven.
 
 **I found a bug or disagree with something.** Please open an issue. I found several bugs in my own code while building this (and wrote them up in the lesson READMEs), so there are probably more.
 
@@ -200,4 +209,5 @@ genai-engineer-journey/
   lesson-08-multi-agent-in-claude/   orchestration, isolation, routing
   lesson-09-metacognition-in-claude/ grounded reflection, recovery, calibration
   lesson-10-production-in-claude/    telemetry, evaluation, release gates
+  lesson-11-protocols-in-claude/     MCP, A2A, and the trust layer between them
 ```
