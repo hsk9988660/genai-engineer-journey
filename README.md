@@ -1,12 +1,12 @@
 # GenAI Engineer Journey
 
-**Fifteen lessons on building AI agents, each one a small, tested, working codebase on the Claude API, with no agent framework and no cloud account.**
+**Sixteen lessons on building AI agents, each one a small, tested, working codebase on the Claude API, with no agent framework and no cloud account.**
 
-This repo follows the first fifteen lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
+This repo follows the first sixteen lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
 
 1. **The concept, argued like a senior engineer would.** Not "what is a planner" but "when does a planner beat a loop, and how does it fail?"
 2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,450 (lesson 11), comments included, using only `anthropic`, `pydantic` and the standard library.
-3. **Tests you can run for free.** 1,039 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
+3. **Tests you can run for free.** 1,291 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
 
 Every lesson README also has a section called **"What is NOT known"**. That is deliberate. See [Honest status](#honest-status-read-this-before-you-trust-anything).
 
@@ -20,7 +20,7 @@ It is probably not for you if you want a ready-made library to import. These are
 
 ## The big ideas
 
-Thirteen ideas come up across the lessons. If you only read this section, read these.
+Fourteen ideas come up across the lessons. If you only read this section, read these.
 
 1. **An agent is an LLM in a loop with tools, and the loop is about 25 lines.** Everything else is refinement. (Lesson 01)
 2. **The model proposes, your code disposes.** The model only *requests* tool calls. Your code decides whether they run. (04, 06)
@@ -35,6 +35,7 @@ Thirteen ideas come up across the lessons. If you only read this section, read t
 11. **Memory is a governed database, not a model feature.** Identity is bound in code (the model never supplies a user id), writes need a trusted source and a verbatim quote, sensitive facts need consent, and deletion is verified against the raw file. (13)
 12. **A workflow makes control flow checkable: code owns the arrows, the model works inside the boxes.** Validate the graph before running, never let a model step choose the route, bind approvals to the exact thing shown, make side effects happen once across a crash, and treat middleware that rewrites results as a hazard. (14)
 13. **A browser agent is a prompt-injection target with a mouse.** Check every URL hop in code, drop hidden text, never let the model type a password, bind approvals to what code verified and re-check at click time, and let code do the arithmetic. (15)
+14. **Production is what happens when many requests, users and failures meet your agent at once.** Refuse work before starting it, retry only transient errors behind a circuit breaker, never share a cached answer that used one user's data, gate releases with an interval that can say "not enough cases", and roll out to a stable slice of users. (16)
 
 ## Quick start
 
@@ -44,7 +45,7 @@ cd genai-engineer-journey
 python -m venv .venv
 .venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python run_all_tests.py           # all 1,039 offline tests, one summary table
+python run_all_tests.py           # all 1,291 offline tests, one summary table
 ```
 
 Run one lesson, or a few:
@@ -79,6 +80,7 @@ Read them in order the first time. Later lessons build on earlier ones.
 | [13](lesson-13-agent-memory-in-claude/) | **Agent memory** | A SQLite memory store with a typed key registry, supersession, quarantine, consent, verified deletion and a content-free audit log; a budgeted read path; a quote-verified write path; model tools with no user id | SQLite leaves "deleted" text in the file unless told otherwise, and tests now scan the raw file. A generic query missed a stored budget (kept as a labelled row). The notebook design leaks another user's data through a model-supplied `user_id`. Not run against a live model. | 92 |
 | [14](lesson-14-workflows-in-claude/) | **Workflows and handoff** | A workflow engine (validated graph, conditional routing, parallel steps with timeouts, checkpoint and resume, approvals bound to what was shown), middleware that cannot lie quietly, guarded agent handoff | A model step cannot choose a route here, because routing on a model's claim booked a room that did not exist. A declared override only helps if the step checks the flag. A crash between a side effect and its checkpoint is handled by a ledger. Microsoft Agent Framework itself was not run. | 99 |
 | [15](lesson-15-computer-use-in-claude/) | **Computer-use agents** | A browser-agent loop with a URL allow-list that checks every redirect hop, a safe page snapshot that drops hidden text, a default-deny action policy, approvals re-checked at click time, and verified extraction where code does the math | The lesson's README lists safety rules its notebook never implements. A "verified" hostile listing won "cheapest" until quarantined. Built on a simulated site: no real browser, no vision, no live model. | 163 |
+| [16](lesson-16-serving-agents-in-claude/) | **Serving agents** | A serving layer: admission control, retries with a circuit breaker, idempotency, a cache that cannot leak, a model cascade, budgets, an interval-based release gate, a canary rollout, an HTTP front end, and a separate [implementation guide](lesson-16-serving-agents-in-claude/IMPLEMENTATION.md) | The lesson's 4-case gate blocks a good agent 34% of the time. Its cache shows one customer's order to another. A burst with no admission control failed 35 of 40 requests. A test for a lock passed with the lock deleted until I made the race deterministic. No real API, cloud deployment or load test. | 252 |
 
 ## Find it by concept
 
@@ -132,6 +134,13 @@ Jumping in for one idea? Start here.
 | Deciding which browser actions need a human | [15 `policy.py`](lesson-15-computer-use-in-claude/policy.py) |
 | Reading prices from a page without trusting the model's math | [15 `extract.py`](lesson-15-computer-use-in-claude/extract.py) |
 | The browser agent loop with limits and approvals | [15 `agent.py`](lesson-15-computer-use-in-claude/agent.py) |
+| Refusing work when the system is full (429 + Retry-After) | [16 `admission.py`](lesson-16-serving-agents-in-claude/admission.py) |
+| Retries, backoff with jitter, and a circuit breaker | [16 `resilience.py`](lesson-16-serving-agents-in-claude/resilience.py) |
+| A response cache that cannot leak between users | [16 `cache.py`](lesson-16-serving-agents-in-claude/cache.py) |
+| Gating a release with a confidence interval, and canary rollouts | [16 `release.py`](lesson-16-serving-agents-in-claude/release.py) |
+| Per-user budgets and cost reports | [16 `cost.py`](lesson-16-serving-agents-in-claude/cost.py) |
+| Routing between a cheap and an expensive model | [16 `router.py`](lesson-16-serving-agents-in-claude/router.py) |
+| The whole request path, start to end | [16 `service.py`](lesson-16-serving-agents-in-claude/service.py), [16 `IMPLEMENTATION.md`](lesson-16-serving-agents-in-claude/IMPLEMENTATION.md) |
 
 ## How each lesson is organized
 
@@ -181,6 +190,7 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 | 13 | | `python harness.py` (naive vs managed memory, no model needed) |
 | 14 | | `python harness.py` (five guarded-vs-unguarded scenarios, no model needed) |
 | 15 | | `python harness.py` (naive vs guarded browser agent on a simulated site, no model or browser needed) |
+| 16 | | `python harness.py` (six serving scenarios, no model or cloud needed) |
 
 - **Live runs cost real money.** The `evals`, `compare` and `harness` commands make many calls. Check your usage before running them.
 - Most lessons read the model name from the `ANTHROPIC_MODEL` environment variable, falling back to `claude-sonnet-5-5`. Set it to the model you want. A few helpers have the default written in directly, so search a lesson for `claude-sonnet-5-5` if you change models.
@@ -189,12 +199,13 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 
 ## Honest status: read this before you trust anything
 
-**Verified:** all 1,039 tests pass (`python run_all_tests.py`). Lessons 09, 10, 11, 12, 13, 14 and 15 were also *mutation-checked*: key behaviors were deliberately broken in a scratch copy to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
+**Verified:** all 1,291 tests pass (`python run_all_tests.py`). Lessons 09 to 16 were also *mutation-checked*: key behaviors were deliberately broken in a scratch copy to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
 
 **Not verified, and the lesson READMEs say so:**
 - **Nothing was run against a live model.** Every model response in every test is scripted. The tests prove the *mechanics* (validation, caps, isolation, routing, statistics). They do **not** prove how a real model behaves.
 - **The live evaluations have never been run.** `evals.py live`, `compare.py` and `harness.py` are how you would find out, for example, whether multi-agent beats a single agent, or whether reflection helps or hurts. The repo does not know the answers, and any such claim in a README is labelled a hypothesis.
 - **Numbers in tests are scripted.** Token counts, prices (placeholders for made-up model names), and the "$2 per failure" example are arithmetic, not measurements.
+- **Lesson 16 deployed nothing and called no real API.** The provider, its rate limits and its latency are test doubles, prices are placeholders, and there is no load test at realistic scale. Its cache, idempotency, budget and canary state is per process, so it is not yet safe to run as several instances.
 - **Lesson 15 used a simulated website, not a real browser.** There is no vision, no real DOM or JavaScript, and no live model, and hidden-text detection is only a flag in the sim. The gullible model is a one-rule stand-in. I did not run Browser-Use.
 - **Lesson 14 did not run Microsoft Agent Framework or any live model.** My critique of the framework comes from reading its README and notebooks, and it may offer more than those show. Crash recovery was simulated, not tested by killing a process, and the handoff baseline is a loop I wrote.
 - **Lesson 13's extractor is a regex test double.** Its comparison shows what the mechanisms do. How well a real model extracts and quotes facts is unmeasured, retrieval weights are untuned, retrieval is lexical only, and SQLite deletion was tested on one machine. There is no live harness.
@@ -212,9 +223,9 @@ Treat this as **learning material, not audited production code.** If you use any
 
 **Will it work with other models?** The code uses Anthropic's API shapes (tool use blocks, forced `tool_choice`, `input_schema`). I have not tested other providers. The ideas transfer, but the code would need adapting.
 
-**Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 15 is in the guards, checks and measurements, not in the happy path.
+**Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 16 is in the guards, checks and measurements, not in the happy path.
 
-**Where are lessons 16 to 18?** Not built yet. The source course has more lessons (deployment, local agents, security). This repo covers the first fifteen.
+**Where are lessons 17 and 18?** Not built yet. The source course has two more lessons (local agents and securing agents). This repo covers the first sixteen. Lesson 16 also has a separate `IMPLEMENTATION.md` that walks through the code; the other lessons' READMEs describe their code.
 
 **I found a bug or disagree with something.** Please open an issue. I found several bugs in my own code while building this (and wrote them up in the lesson READMEs), so there are probably more.
 
@@ -250,4 +261,5 @@ genai-engineer-journey/
   lesson-13-agent-memory-in-claude/  governed memory store, verified deletion
   lesson-14-workflows-in-claude/     checked workflows, resume, approvals, handoff
   lesson-15-computer-use-in-claude/  guarded browser agent on a simulated site
+  lesson-16-serving-agents-in-claude/ serving layer, release gate, IMPLEMENTATION.md
 ```
