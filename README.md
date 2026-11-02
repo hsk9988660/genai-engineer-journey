@@ -5,7 +5,7 @@
 This repo follows all eighteen lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
 
 1. **The concept, argued like a senior engineer would.** Not "what is a planner" but "when does a planner beat a loop, and how does it fail?"
-2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,450 (lesson 11), comments included, using only `anthropic`, `pydantic` and the standard library.
+2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,700 (lesson 16), comments included, using `anthropic`, `pydantic` and the standard library (lesson 18 also needs `cryptography` for Ed25519).
 3. **Tests you can run for free.** 1,764 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
 
 Every lesson README also has a section called **"What is NOT known"**. That is deliberate. See [Honest status](#honest-status-read-this-before-you-trust-anything).
@@ -232,6 +232,12 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 - **Lesson 11 was never tested against an official MCP or A2A implementation.** Its server and client agree with each other, and were written from my recollection of the specs, which differ between versions. Its A2A code is explicitly *inspired by* A2A and is not wire-compatible.
 - **Several known limits are documented per lesson**, such as: regex PII detection misses names, a verbatim quote check does not prove a quote supports a claim, and a policy engine is only as good as the metadata developers declare.
 
+**The course is complete, so here is what to do next.** The repo teaches the mechanisms. These are the steps that would turn its claims into measurements:
+1. **Run the live commands** in the table above with your own API key, starting with the cheap ones, and compare the results with the README hypotheses. None has been run.
+2. **Run `evaluate_local.py` (lesson 17) against a local model** to measure its tool calling. It has only ever run against a scripted server.
+3. **Run the original lesson 18 notebook** top to bottom to check the `BadSignatureError` problem described in that lesson's README.
+4. **Tune the defaults** (timeouts, caps, thresholds, retrieval weights) on your own traffic. None was tuned against real data.
+
 Treat this as **learning material, not audited production code.** If you use any of it for something that matters, run the live evaluations on your own data first.
 
 ## FAQ
@@ -263,7 +269,7 @@ No license file has been added yet. Until one is, the code is shared for reading
 ```
 genai-engineer-journey/
   README.md                          this file
-  requirements.txt                   anthropic, pydantic, pytest
+  requirements.txt                   anthropic, pydantic, pytest, cryptography
   run_all_tests.py                   run every lesson's tests, print one table
   lesson-01-agent-loop/              the loop
   lesson-02-frameworks-in-claude/    what frameworks do
