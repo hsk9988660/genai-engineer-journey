@@ -250,7 +250,7 @@ Treat this as **learning material, not audited production code.** If you use any
 
 **Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 18 is in the guards, checks and measurements, not in the happy path.
 
-**Are there more lessons?** This repo now covers all eighteen lessons in the source course as I read it. The course may add more, so check its repository. Lessons 16, 17 and 18 also have a separate `IMPLEMENTATION.md` that walks through the code; the other lessons' READMEs describe their code.
+**Are there more lessons?** This repo now covers all eighteen lessons in the source course as I read it. The course may add more, so check its repository. Every lesson folder has an `IMPLEMENTATION.md` that walks through its code: where a run starts, what happens in order, where it ends, a module reference, design decisions and limits. The lesson READMEs say *why* and report what was measured.
 
 **I found a bug or disagree with something.** Please open an issue. I found several bugs in my own code while building this (and wrote them up in the lesson READMEs), so there are probably more.
 
