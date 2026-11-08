@@ -1,0 +1,8 @@
+langchain>=1.4
+langgraph>=1.2
+langgraph-checkpoint-sqlite>=3
+langchain-text-splitters>=1
+langchain-anthropic>=1.7
+pydantic>=2
+numpy>=1.24
+pytest>=8

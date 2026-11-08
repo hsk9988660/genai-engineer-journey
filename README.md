@@ -1,12 +1,12 @@
 # GenAI Engineer Journey
 
-**Eighteen lessons on building AI agents, each one a small, tested, working codebase on the Claude API, with no agent framework and no cloud account.**
+**Nineteen lessons on building AI agents, each one a small, tested, working codebase with no cloud account. Eighteen use the Claude API with no agent framework. The nineteenth builds one project with LangChain and LangGraph, so you can compare.**
 
-This repo follows all eighteen lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. For every lesson you get three things:
+This repo follows all eighteen lessons of Microsoft's [AI Agents for Beginners](https://github.com/microsoft/ai-agents-for-beginners) course and rebuilds each one from first principles. (Lesson 19 is an extra that I added. It is not part of that course.) For every lesson you get three things:
 
 1. **The concept, argued like a senior engineer would.** Not "what is a planner" but "when does a planner beat a loop, and how does it fail?"
-2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,700 (lesson 16), comments included, using `anthropic`, `pydantic` and the standard library (lesson 18 also needs `cryptography` for Ed25519).
-3. **Tests you can run for free.** 1,764 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
+2. **Working code you can read in an evening or two.** From about 150 lines (lesson 01) to about 1,700 (lesson 16), comments included, using `anthropic`, `pydantic` and the standard library (lesson 18 also needs `cryptography` for Ed25519, and lesson 19 uses `langchain` and `langgraph`).
+3. **Tests you can run for free.** 2,200 offline tests with a scripted fake model. No API key and no cost. (Lesson 11's tests also launch real child processes and a localhost-only HTTP server.)
 
 Every lesson README also has a section called **"What is NOT known"**. That is deliberate. See [Honest status](#honest-status-read-this-before-you-trust-anything).
 
@@ -20,7 +20,7 @@ It is probably not for you if you want a ready-made library to import. These are
 
 ## The big ideas
 
-Sixteen ideas come up across the lessons. If you only read this section, read these.
+Seventeen ideas come up across the lessons. If you only read this section, read these.
 
 1. **An agent is an LLM in a loop with tools, and the loop is about 25 lines.** Everything else is refinement. (Lesson 01)
 2. **The model proposes, your code disposes.** The model only *requests* tool calls. Your code decides whether they run. (04, 06)
@@ -38,6 +38,7 @@ Sixteen ideas come up across the lessons. If you only read this section, read th
 14. **Production is what happens when many requests, users and failures meet your agent at once.** Refuse work before starting it, retry only transient errors behind a circuit breaker, never share a cached answer that used one user's data, gate releases with an interval that can say "not enough cases", and roll out to a stable slice of users. (16)
 15. **A local model changes where data goes, not what an agent needs.** Validate a small model's tool calls and feed errors back instead of crashing, sandbox its files, let search say "nothing relevant", measure its tool calling with intervals, and track sensitivity through a whole conversation so a secret never follows a question to the cloud. (17)
 16. **A signed record proves a key signed it, nothing more.** Pin the verifier's keys instead of trusting the key in the receipt, write an intent before the action and a result after, chain one run end to end, anchor checkpoints where the host cannot rewrite them, and bind a human approval to the exact action and spend it once. (18)
+17. **A framework is a set of defaults, so learn them, and keep your rules outside it.** In the tested version the default step limit is 10,007, a bug in a tool ends the whole run unless you opt in to handling it, a subgraph double counts a shared list, and an approval click is not a rule. Put money and permission rules in plain code behind the tools, let code choose the route, and test the framework's behavior instead of trusting a tutorial. (19)
 
 ## Quick start
 
@@ -47,7 +48,7 @@ cd genai-engineer-journey
 python -m venv .venv
 .venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python run_all_tests.py           # all 1,764 offline tests, one summary table
+python run_all_tests.py           # all 2,200 offline tests, one summary table
 ```
 
 Run one lesson, or a few:
@@ -85,6 +86,7 @@ Read them in order the first time. Later lessons build on earlier ones.
 | [16](lesson-16-serving-agents-in-claude/) | **Serving agents** | A serving layer: admission control, retries with a circuit breaker, idempotency, a cache that cannot leak, a model cascade, budgets, an interval-based release gate, a canary rollout, an HTTP front end, and a separate [implementation guide](lesson-16-serving-agents-in-claude/IMPLEMENTATION.md) | The lesson's 4-case gate blocks a good agent 34% of the time. Its cache shows one customer's order to another. A burst with no admission control failed 35 of 40 requests. A test for a lock passed with the lock deleted until I made the race deterministic. No real API, cloud deployment or load test. | 252 |
 | [17](lesson-17-local-agents-in-claude/) | **Local agents** | A tool-calling loop for small local models (bad JSON becomes feedback, not a crash), a hardened file sandbox, local search that can say "nothing relevant", a hybrid router with taint tracking, resource formulas, and a script to measure *your* model's tool calling, plus an [implementation guide](lesson-17-local-agents-in-claude/IMPLEMENTATION.md) | The lesson's loop crashes on its first malformed tool call and its file tool returns `.env`. Routing by request alone sent a password to the cloud. **No real local model was run**: Claude is a cloud API, so this is the harness around any local model, tested on a scripted fake server. | 251 |
 | [18](lesson-18-receipts-in-claude/) | **Signed receipts** | Ed25519-signed, hash-chained receipts for every tool call with intent before result, a verifier that pins keys and names every failure, signed checkpoints and a Merkle tree, one-time human approvals bound to the exact action, and an [implementation guide](lesson-18-receipts-in-claude/IMPLEMENTATION.md) | The lesson's receipt layout verifies a forgery against the key embedded in it. A chain cannot show that its end was cut off without an anchored checkpoint. A plain hash of guessable arguments can be brute-forced. I did not run the lesson's notebook, and no real key vault, transparency log or process crash was used. | 222 |
+| [19](lesson-19-langgraph-langchain-in-claude/) | **LangChain and LangGraph** | Part 1: a support desk built in seven stages with the real libraries (`create_agent`, a hand-built graph, verified structured triage, memory, human approval, middleware, one workflow where code picks the route). Part 2: eight deeper stages, four on LangGraph (parallel work with `Send`, `Command` and `interrupt()`, SQLite persistence and time travel, streaming) and four on LangChain (runnables and the `\|` pipe, messages and tools, retrieval with checked citations, cost tracking, caching, rate limits and fallbacks). Every stage has its own plain-language explanation in [docs/](lesson-19-langgraph-langchain-in-claude/docs/00-start-here.md), plus an [implementation guide](lesson-19-langgraph-langchain-in-claude/IMPLEMENTATION.md) | The default step limit is 10,007, not 25. A bug in a tool ends the whole run unless you opt in to handling it. Code before an `interrupt()` runs twice. A repeated agent run replays only its first cached model call. My first way of crediting refunds to a ticket was wrong with two tickets in flight, and my own redaction regex had two bugs. **No live model, no Postgres saver, no real embeddings and no concurrency were run.** | 436 |
 
 ## Find it by concept
 
@@ -156,6 +158,23 @@ Jumping in for one idea? Start here.
 | Verifying a chain of records and naming every failure | [18 `verify.py`](lesson-18-receipts-in-claude/verify.py) |
 | Detecting a log whose end was cut off | [18 `checkpoint.py`](lesson-18-receipts-in-claude/checkpoint.py), [18 `merkle.py`](lesson-18-receipts-in-claude/merkle.py) |
 | A human approval that covers one exact action and works once | [18 `approval.py`](lesson-18-receipts-in-claude/approval.py) |
+| Learning LangChain and LangGraph from zero, one stage at a time | [19 `docs/00-start-here.md`](lesson-19-langgraph-langchain-in-claude/docs/00-start-here.md) |
+| Running LangGraph nodes in parallel and merging the results | [19 `stage8_parallel.py`](lesson-19-langgraph-langchain-in-claude/stage8_parallel.py) |
+| A graph that asks the customer a question and routes with `Command` | [19 `stage9_commands.py`](lesson-19-langgraph-langchain-in-claude/stage9_commands.py) |
+| Resuming a paused ticket after a restart, replay and what-if | [19 `stage10_durability.py`](lesson-19-langgraph-langchain-in-claude/stage10_durability.py) |
+| Streaming tokens, progress events and nested graphs | [19 `stage11_streaming.py`](lesson-19-langgraph-langchain-in-claude/stage11_streaming.py) |
+| LangChain prompts, parsers and the `\|` pipe, with retry and fallbacks | [19 `stage12_runnables.py`](lesson-19-langgraph-langchain-in-claude/stage12_runnables.py) |
+| Trimming history safely and tools that return artifacts | [19 `stage13_messages_tools.py`](lesson-19-langgraph-langchain-in-claude/stage13_messages_tools.py) |
+| LangChain retrieval with permission filtering and checked citations | [19 `stage14_rag.py`](lesson-19-langgraph-langchain-in-claude/stage14_rag.py) |
+| Counting tokens and cost, caching, rate limiting and model fallback | [19 `stage15_model_ops.py`](lesson-19-langgraph-langchain-in-claude/stage15_model_ops.py) |
+| The main LangChain and LangGraph functions in one place | [19 `docs/08-cheat-sheet.md`](lesson-19-langgraph-langchain-in-claude/docs/08-cheat-sheet.md) |
+| A `create_agent` agent, and the same agent as a hand-built graph | [19 `stage1_first_agent.py`](lesson-19-langgraph-langchain-in-claude/stage1_first_agent.py), [19 `stage2_graph_by_hand.py`](lesson-19-langgraph-langchain-in-claude/stage2_graph_by_hand.py) |
+| A tool that gets the verified customer id without the model supplying it | [19 `tools.py`](lesson-19-langgraph-langchain-in-claude/tools.py) |
+| Structured output whose facts are checked against the records | [19 `stage3_triage.py`](lesson-19-langgraph-langchain-in-claude/stage3_triage.py) |
+| Thread memory and long-term memory in LangGraph | [19 `stage4_memory.py`](lesson-19-langgraph-langchain-in-claude/stage4_memory.py) |
+| A human-in-the-loop pause that cannot bypass the business rules | [19 `stage5_approval.py`](lesson-19-langgraph-langchain-in-claude/stage5_approval.py), [19 `desk.py`](lesson-19-langgraph-langchain-in-claude/desk.py) |
+| Agent middleware: audit, retry, error handling, call limits | [19 `stage6_middleware.py`](lesson-19-langgraph-langchain-in-claude/stage6_middleware.py) |
+| A workflow graph where code, not the model, picks the route | [19 `stage7_support_desk.py`](lesson-19-langgraph-langchain-in-claude/stage7_support_desk.py) |
 
 ## How each lesson is organized
 
@@ -176,6 +195,8 @@ lesson-NN-topic-in-claude/
 3. Read the code the tests exercise.
 4. **Break something on purpose and watch a test fail.** Delete a validation rule and see which test catches it. This teaches more than reading.
 5. Do the exercises at the bottom of the README.
+
+**Lesson 19 differs in two ways.** It uses the real `langchain` and `langgraph` packages, and it adds a `docs/` folder with one explanation per stage (fifteen stages in two parts), written for a reader who is new to both libraries. Start with `docs/00-start-here.md`.
 
 **Some code is deliberately duplicated across lessons** (a small PII redactor, a validated-model-call helper). Each lesson is self-contained so you can read or copy one folder without needing the others.
 
@@ -216,12 +237,13 @@ cd lesson-01-agent-loop && python agent.py "I want a warm beach holiday on a low
 
 ## Honest status: read this before you trust anything
 
-**Verified:** all 1,764 tests pass (`python run_all_tests.py`). Lessons 09 to 18 were also *mutation-checked*: key behaviors were deliberately broken in a scratch copy to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
+**Verified:** in the last full run (`python run_all_tests.py`, 2026-11-08), 2,199 of 2,200 tests passed. The one failure was lesson 14's `test_the_trace_records_who_approved_but_not_the_amount`, which fails intermittently: it failed in roughly half of my full runs, and passed on its own and in eight reruns in a row. I did not touch that lesson and have not found the cause, so treat it as one flaky test. Lesson 19's 436 tests passed every time. Lessons 09 to 19 were also *mutation-checked*: key behaviors were deliberately broken (in a scratch copy, or in place and then restored) to confirm a test fails each time, and each of those READMEs reports the result. Lessons 01 to 08 were not mutation-checked, so their tests have had less scrutiny.
 
 **Not verified, and the lesson READMEs say so:**
 - **Nothing was run against a live model.** Every model response in every test is scripted. The tests prove the *mechanics* (validation, caps, isolation, routing, statistics). They do **not** prove how a real model behaves.
 - **The live evaluations have never been run.** `evals.py live`, `compare.py` and `harness.py` are how you would find out, for example, whether multi-agent beats a single agent, or whether reflection helps or hurts. The repo does not know the answers, and any such claim in a README is labelled a hypothesis.
 - **Numbers in tests are scripted.** Token counts, prices (placeholders for made-up model names), and the "$2 per failure" example are arithmetic, not measurements.
+- **Lesson 19 ran no live model, no Postgres saver, no real embeddings and no concurrency.** `run_live.py` is checked only for wiring, with a dummy key. The scripted model is simpler than a real one, and its embeddings and summariser are stand-ins, so retrieval and summary quality are unmeasured. Only SQLite was run, and its restart is a clean close, not a crash. Batched approval of several refunds in one turn is untested. The libraries change quickly, and everything was checked on one set of versions.
 - **Lesson 18 did not run the lesson's notebook, a real key vault, a transparency log or a killed process.** Its critique of the notebook is from reading it, its crash is simulated, durability is untested, and its canonical JSON is a restricted subset of RFC 8785 that I did not cross-check.
 - **Lesson 17 ran no real local model.** Its tests use a scripted fake server, its memory numbers are formulas from a recalled model shape, and `evaluate_local.py` has never been run against a real server. Two sandbox filters are tested by patching the resolver because this machine cannot create file symlinks.
 - **Lesson 16 deployed nothing and called no real API.** The provider, its rate limits and its latency are test doubles, prices are placeholders, and there is no load test at realistic scale. Its cache, idempotency, budget and canary state is per process, so it is not yet safe to run as several instances.
@@ -244,13 +266,13 @@ Treat this as **learning material, not audited production code.** If you use any
 
 **Do I need an API key?** Not to run the tests or read the code. You need one only for the live commands.
 
-**Why no framework (LangChain, AutoGen, the Microsoft Agent Framework)?** To see what they do for you. The original course uses Microsoft's framework and Azure services. Rebuilding on the raw API shows that the core is small, and it makes it easier to judge whether a framework is worth its cost. Lesson 02 builds a tiny framework to make that concrete.
+**Why no framework (LangChain, AutoGen, the Microsoft Agent Framework)?** To see what they do for you. Lessons 01 to 18 do without one. Lesson 19 then uses LangChain and LangGraph for a mid-sized project, so you can judge what they save and what they hide. The original course uses Microsoft's framework and Azure services. Rebuilding on the raw API shows that the core is small, and it makes it easier to judge whether a framework is worth its cost. Lesson 02 builds a tiny framework to make that concrete.
 
 **Will it work with other models?** The code uses Anthropic's API shapes (tool use blocks, forced `tool_choice`, `input_schema`). I have not tested other providers. The ideas transfer, but the code would need adapting.
 
 **Why so many lessons about what can go wrong?** Because demos hide failure and production does not. Most of the value in lessons 04 to 18 is in the guards, checks and measurements, not in the happy path.
 
-**Are there more lessons?** This repo now covers all eighteen lessons in the source course as I read it. The course may add more, so check its repository. Every lesson folder has an `IMPLEMENTATION.md` that walks through its code: where a run starts, what happens in order, where it ends, a module reference, design decisions and limits. The lesson READMEs say *why* and report what was measured.
+**Are there more lessons?** This repo covers all eighteen lessons in the source course as I read it, plus lesson 19, which I added. The course may add more, so check its repository. Every lesson folder has an `IMPLEMENTATION.md` that walks through its code: where a run starts, what happens in order, where it ends, a module reference, design decisions and limits. The lesson READMEs say *why* and report what was measured.
 
 **I found a bug or disagree with something.** Please open an issue. I found several bugs in my own code while building this (and wrote them up in the lesson READMEs), so there are probably more.
 
@@ -269,7 +291,7 @@ No license file has been added yet. Until one is, the code is shared for reading
 ```
 genai-engineer-journey/
   README.md                          this file
-  requirements.txt                   anthropic, pydantic, pytest, cryptography
+  requirements.txt                   anthropic, pydantic, pytest, cryptography, langchain, langgraph
   run_all_tests.py                   run every lesson's tests, print one table
   lesson-01-agent-loop/              the loop
   lesson-02-frameworks-in-claude/    what frameworks do
@@ -289,4 +311,5 @@ genai-engineer-journey/
   lesson-16-serving-agents-in-claude/ serving layer, release gate, IMPLEMENTATION.md
   lesson-17-local-agents-in-claude/  hardened local-model loop, sandbox, taint-tracking router
   lesson-18-receipts-in-claude/      signed receipts, chains, checkpoints, one-time approvals
+  lesson-19-langgraph-langchain-in-claude/  LangChain and LangGraph, fifteen stages with docs/
 ```
